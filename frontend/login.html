@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>כניסה | מערכת מוקד מצוקה יד שרה</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+
+  <div class="w-full max-w-md bg-white rounded-3xl shadow-lg p-6 relative overflow-hidden">
+
+    <!-- Watermark logo -->
+    <div class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+      <div id="logo-watermark" class="text-7xl font-black"></div>
+    </div>
+
+    <div class="relative z-10">
+
+      <!-- Header -->
+      <div class="flex items-center gap-3 mb-6">
+        <div id="logo" class="h-10"></div>
+        <div>
+          <div class="text-xl font-extrabold text-slate-800">מערכת מוקד</div>
+          <div class="text-sm font-bold text-slate-500">
+            כניסה / רישום (נדרש אישור אחמ״ש)
+          </div>
+        </div>
+      </div>
+
+      <!-- Backend status -->
+      <div id="status"
+           class="mb-4 text-sm font-bold text-slate-500">
+        בודק חיבור למערכת…
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-4">
+        <button id="tab-login"
+                class="flex-1 py-2 rounded-2xl bg-slate-900 text-white font-extrabold">
+          כניסה
+        </button>
+        <button id="tab-register"
+                class="flex-1 py-2 rounded-2xl bg-slate-200 text-slate-800 font-extrabold">
+          רישום
+        </button>
+      </div>
+
+      <!-- Login -->
+      <form id="login-form" class="space-y-3">
+        <input id="login-id"
+               class="w-full p-3 rounded-2xl border font-bold"
+               placeholder="טלפון או מייל" />
+
+        <input id="login-password"
+               type="password"
+               class="w-full p-3 rounded-2xl border font-bold"
+               placeholder="סיסמה" />
+
+        <button
+          class="w-full py-3 rounded-2xl bg-blue-600 text-white font-extrabold">
+          התחברות
+        </button>
+      </form>
+
+      <!-- Register -->
+      <form id="register-form" class="space-y-3 hidden">
+        <input id="reg-name"
+               class="w-full p-3 rounded-2xl border font-bold"
+               placeholder="שם מלא" />
+
+        <input id="reg-phone"
+               class="w-full p-3 rounded-2xl border font-bold"
+               placeholder="טלפון" />
+
+        <input id="reg-email"
+               class="w-full p-3 rounded-2xl border font-bold"
+               placeholder="מייל (רשות)" />
+
+        <input id="reg-password"
+               type="password"
+               class="w-full p-3 rounded-2xl border font-bold"
+               placeholder="סיסמה (מינימום 4 תווים)" />
+
+        <button
+          class="w-full py-3 rounded-2xl bg-emerald-600 text-white font-extrabold">
+          רישום
+        </button>
+      </form>
+
+      <!-- Message -->
+      <div id="msg" class="mt-4 font-bold text-sm"></div>
+
+    </div>
+  </div>
+
+  <!-- Logic -->
+  <script type="module">
+    import { CONFIG } from "./config.js";
+    import { api, loadLogo, setSession } from "./app.js";
+
+    const logoBox = document.getElementById("logo");
+    const logoWatermark = document.getElementById("logo-watermark");
+    const statusBox = document.getElementById("status");
+    const msg = document.getElementById("msg");
+
+    loadLogo(logoBox);
+    logoWatermark.textContent = CONFIG.LOGO_TEXT;
+
+    /* ================== Backend health ================== */
+    api.health()
+      .then(res => {
+        if (res.ok) {
+          statusBox.textContent = "מחובר למערכת ✔";
+          statusBox.classList.add("text-emerald-600");
+        } else {
+          statusBox.textContent = "שגיאת חיבור למערכת";
+          statusBox.classList.add("text-red-600");
+        }
+      })
+      .catch(() => {
+        statusBox.textContent = "לא ניתן להתחבר לשרת";
+        statusBox.classList.add("text-red-600");
+      });
+
+    /* ================== Tabs ================== */
+    const tabLogin = document.getElementById("tab-login");
+    const tabRegister = document.getElementById("tab-register");
+    const loginForm = document.getElementById("login-form");
+    const registerForm = document.getElementById("register-form");
+
+    tabLogin.onclick = () => switchTab("login");
+    tabRegister.onclick = () => switchTab("register");
+
+    function switchTab(tab) {
+      const isLogin = tab === "login";
+
+      loginForm.classList.toggle("hidden", !isLogin);
+      registerForm.classList.toggle("hidden", isLogin);
+
+      tabLogin.className =
+        "flex-1 py-2 rounded-2xl font-extrabold " +
+        (isLogin
+          ? "bg-slate-900 text-white"
+          : "bg-slate-200 text-slate-800");
+
+      tabRegister.className =
+        "flex-1 py-2 rounded-2xl font-extrabold " +
+        (!isLogin
+          ? "bg-slate-900 text-white"
+          : "bg-slate-200 text-slate-800");
+
+      msg.textContent = "";
+    }
+
+    /* ================== Login ================== */
+    loginForm.onsubmit = async (e) => {
+      e.preventDefault();
+      msg.textContent = "מתחבר…";
+      msg.className = "mt-4 font-bold text-slate-500";
+
+      const login = document.getElementById("login-id").value.trim();
+      const password = document.getElementById("login-password").value;
+
+      const res = await fetch(CONFIG.API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "login",
+          login,
+          password
+        })
+      }).then(r => r.json());
+
+      if (!res.ok) {
+        msg.textContent = res.error || "שגיאה בהתחברות";
+        msg.className = "mt-4 font-bold text-red-600";
+        return;
+      }
+
+      setSession(res.token, res.user);
+      window.location.href = "schedule.html";
+    };
+
+    /* ================== Register ================== */
+    registerForm.onsubmit = async (e) => {
+      e.preventDefault();
+      msg.textContent = "שולח בקשת רישום…";
+      msg.className = "mt-4 font-bold text-slate-500";
+
+      const res = await fetch(CONFIG.API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "register",
+          name: document.getElementById("reg-name").value.trim(),
+          phone: document.getElementById("reg-phone").value.trim(),
+          email: document.getElementById("reg-email").value.trim(),
+          password: document.getElementById("reg-password").value
+        })
+      }).then(r => r.json());
+
+      if (!res.ok) {
+        msg.textContent = res.error || "שגיאה ברישום";
+        msg.className = "mt-4 font-bold text-red-600";
+        return;
+      }
+
+      msg.textContent = "נרשמת בהצלחה. ממתין לאישור אחמ״ש.";
+      msg.className = "mt-4 font-bold text-emerald-700";
+      switchTab("login");
+    };
+  </script>
+
+</body>
+</html>
