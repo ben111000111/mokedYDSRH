@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>סידור שבועי | מערכת מוקד</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    *{font-family:Heebo,system-ui,-apple-system,Segoe UI,Arial,sans-serif;}
+  </style>
+</head>
+
+<body class="min-h-screen bg-slate-100">
+<div id="toast" style="display:none;"></div>
+
+<header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-slate-200">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div id="logo" class="h-10"></div>
+      <div class="min-w-0">
+        <div class="font-black text-slate-900 leading-tight" id="appName">מערכת מוקד</div>
+        <div id="topNow" class="text-xs font-bold text-slate-500 truncate"></div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a id="adminBtn" class="hidden px-3 py-2 rounded-2xl bg-slate-900 text-white font-extrabold" href="admin.html">אדמין</a>
+      <a class="px-3 py-2 rounded-2xl bg-slate-200 text-slate-900 font-extrabold" href="shabbat.html">שבתות</a>
+      <button id="logout" class="px-3 py-2 rounded-2xl bg-rose-50 text-rose-700 font-extrabold">יציאה</button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto p-4">
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
+    <div>
+      <div id="weekTitle" class="text-2xl font-black text-slate-900"></div>
+      <div id="weekRange" class="text-sm font-bold text-slate-500"></div>
+    </div>
+    <div class="flex gap-2">
+      <button id="prevWeek" class="px-4 py-2 rounded-2xl bg-white border border-slate-200 font-extrabold">◀</button>
+      <button id="today" class="px-4 py-2 rounded-2xl bg-white border border-slate-200 font-extrabold">היום</button>
+      <button id="nextWeek" class="px-4 py-2 rounded-2xl bg-white border border-slate-200 font-extrabold">▶</button>
+    </div>
+  </div>
+
+  <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+  <div class="mt-4 text-sm font-bold text-slate-600" id="msg"></div>
+</main>
+
+<script type="module">
+  import { CONFIG } from "./config.js";
+  import { loadLogo, requireLogin, logout, apiGet, apiPost, esc, hebrewDateString, isoDate, setTopNow, isAchmash, toast } from "./app.js";
+
+  requireLogin();
+
+  document.getElementById("appName").textContent = CONFIG.APP_NAME;
+  loadLogo(document.getElementById("logo"));
+  document.getElementById("logout").onclick = logout;
+
+  // admin button
+  if (isAchmash()) document.getElementById("adminBtn").classList.remove("hidden");
+
+  const topNow = document.getElementById("topNow");
+  setTopNow(topNow);
+
+  // Update clock each 30s
+  setInterval(()=>setTopNow(topNow), 30000);
+
+  let anchor = new Date();
+
+  function shiftCard(s, day) {
+    const disabled = s.locked || s.missing <= 0;
+    const assignedNames = (s.assignees || []).map(x => esc(x.userName)).join(" • ");
+
+    return `
+      <div class="rounded-2xl border border-slate-200 bg-white p-3">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <div class="text-xs font-black text-slate-500">${esc(s.label)}</div>
+            <div class="text-base font-black text-slate-900">מאויש ${s.assigned}/${s.capacity}</div>
+          </div>
+          <span class="text-xs font-black px-2 py-1 rounded-xl ${s.locked ? "bg-slate-200 text-slate-600" : (s.missing>0 ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800")}">
+            ${s.locked ? "נעול" : (s.missing>0 ? "יש מקום" : "מלא")}
+          </span>
+        </div>
+
+        ${s.note ? `<div class="mt-2 text-xs font-bold text-slate-500">הערה: ${esc(s.note)}</div>` : ""}
+
+        <div class="mt-2 text-xs font-bold text-slate-500 ${assignedNames ? "" : "hidden"}">
+          משובצים: ${assignedNames}
+        </div>
+
+        <div class="mt-3 flex gap-2">
+          <button data-request="${esc(s.id)}"
+            class="flex-1 py-2 rounded-2xl font-black ${disabled ? "bg-slate-100 text-slate-400" : "bg-gradient-to-l from-blue-600 to-indigo-600 text-white"}"
+            ${disabled ? "disabled" : ""}>
+            בקשה
+          </button>
+          <button data-more="${esc(s.id)}"
+            class="px-3 py-2 rounded-2xl bg-slate-100 text-slate-900 font-black">
+            פרטים
+          </button>
+        </div>
+
+        <div id="more-${esc(s.id)}" class="mt-2 hidden text-xs font-bold text-slate-600 leading-relaxed"></div>
+      </div>
+    `;
+  }
+
+  function dayCard(day) {
+    const heb = hebrewDateString(new Date(day.date + "T00:00:00"));
+    const sub = [heb, day.date].filter(Boolean).join(" | ");
+    const extras = [day.parasha, day.holidays].filter(Boolean).join(" • ");
+
+    return `
+      <section class="relative overflow-hidden rounded-[28px] border border-white bg-white/70 backdrop-blur shadow-sm">
+        <div class="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none">
+          <div class="text-7xl font-black">${esc(CONFIG.LOGO_TEXT)}</div>
+        </div>
+
+        <div class="relative p-4">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="min-w-0">
+              <div class="text-lg font-black text-slate-900">${esc(day.title)}</div>
+              <div class="text-xs font-bold text-slate-500">${esc(sub)}</div>
+              ${extras ? `<div class="text-xs font-black text-slate-700 mt-1">${esc(extras)}</div>` : ""}
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            ${(day.shifts || []).map(s => shiftCard(s, day)).join("") || `<div class="text-sm font-bold text-slate-400">אין משמרות</div>`}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  async function loadWeek() {
+    document.getElementById("msg").textContent = "טוען סידור…";
+    const r = await apiGet("getWeek", { date: isoDate(anchor) });
+
+    if (!r.ok) {
+      document.getElementById("msg").textContent = r.error || "שגיאה";
+      return;
+    }
+
+    const title = r.weekParasha ? `שבוע פרשת ${r.weekParasha}` : "סידור שבועי";
+    document.getElementById("weekTitle").textContent = title;
+    document.getElementById("weekRange").textContent = `${r.start} – ${r.end}`;
+
+    document.getElementById("grid").innerHTML = (r.days || []).map(dayCard).join("");
+
+    // bind request buttons
+    document.querySelectorAll("button[data-request]").forEach(btn => {
+      btn.onclick = async () => {
+        const shiftId = btn.dataset.request;
+        btn.disabled = true;
+        const rr = await apiPost("requestShift", { shiftId });
+        if (rr.ok) toast("הבקשה נשלחה לאחמ״ש ✔", "ok");
+        else toast(rr.error || "שגיאה", "err");
+        await loadWeek();
+      };
+    });
+
+    // more details
+    document.querySelectorAll("button[data-more]").forEach(btn => {
+      btn.onclick = () => {
+        const shiftId = btn.dataset.more;
+        const box = document.getElementById("more-" + shiftId);
+        const open = !box.classList.contains("hidden");
+        if (open) {
+          box.classList.add("hidden");
+          return;
+        }
+        box.textContent = "מזהה משמרת: " + shiftId;
+        box.classList.remove("hidden");
+      };
+    });
+
+    document.getElementById("msg").textContent = "";
+  }
+
+  document.getElementById("prevWeek").onclick = () => { anchor.setDate(anchor.getDate() - 7); loadWeek(); };
+  document.getElementById("nextWeek").onclick = () => { anchor.setDate(anchor.getDate() + 7); loadWeek(); };
+  document.getElementById("today").onclick = () => { anchor = new Date(); loadWeek(); };
+
+  loadWeek();
+</script>
+</body>
+</html>

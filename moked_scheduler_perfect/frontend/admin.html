@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>אדמין אחמ״ש | מערכת מוקד</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>*{font-family:Heebo,system-ui,-apple-system,Segoe UI,Arial,sans-serif;}</style>
+</head>
+
+<body class="min-h-screen bg-slate-100">
+<div id="toast" style="display:none;"></div>
+
+<header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-slate-200">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div id="logo" class="h-10"></div>
+      <div>
+        <div class="font-black text-slate-900">אדמין אחמ״ש</div>
+        <div id="topNow" class="text-xs font-bold text-slate-500"></div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="schedule.html" class="px-3 py-2 rounded-2xl bg-slate-200 text-slate-900 font-extrabold">בית</a>
+      <button id="logout" class="px-3 py-2 rounded-2xl bg-rose-50 text-rose-700 font-extrabold">יציאה</button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto p-4 space-y-4">
+
+  <!-- Tabs -->
+  <div class="bg-white/70 backdrop-blur border border-white rounded-[28px] shadow-sm p-2 flex gap-2">
+    <button data-tab="requests" class="tabbtn flex-1 py-2.5 rounded-2xl bg-slate-900 text-white font-extrabold">בקשות</button>
+    <button data-tab="users" class="tabbtn flex-1 py-2.5 rounded-2xl bg-white text-slate-900 font-extrabold">משתמשים</button>
+    <button data-tab="shifts" class="tabbtn flex-1 py-2.5 rounded-2xl bg-white text-slate-900 font-extrabold">משמרות</button>
+    <button data-tab="generate" class="tabbtn flex-1 py-2.5 rounded-2xl bg-white text-slate-900 font-extrabold">יצירה</button>
+  </div>
+
+  <!-- REQUESTS -->
+  <section id="tab-requests" class="panel bg-white/70 backdrop-blur border border-white rounded-[28px] shadow-sm p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+      <div>
+        <div class="text-lg font-black text-slate-900">בקשות ממתינות</div>
+        <div class="text-sm font-bold text-slate-500">אישור/דחייה + שיבוץ אוטומטי למשמרת</div>
+      </div>
+      <button id="reloadRequests" class="px-4 py-2 rounded-2xl bg-slate-900 text-white font-extrabold">רענן</button>
+    </div>
+
+    <div id="requestsBox" class="space-y-2"></div>
+    <div id="requestsMsg" class="mt-3 text-sm font-bold text-slate-600"></div>
+  </section>
+
+  <!-- USERS -->
+  <section id="tab-users" class="panel hidden bg-white/70 backdrop-blur border border-white rounded-[28px] shadow-sm p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+      <div>
+        <div class="text-lg font-black text-slate-900">משתמשים</div>
+        <div class="text-sm font-bold text-slate-500">אישור, תפקידים, עריכת פרטים</div>
+      </div>
+      <input id="userSearch" class="p-3 rounded-2xl border border-slate-200 bg-white font-bold w-72 max-w-full" placeholder="חיפוש שם/טלפון/מייל…" />
+    </div>
+    <div id="usersBox" class="space-y-2"></div>
+  </section>
+
+  <!-- SHIFTS -->
+  <section id="tab-shifts" class="panel hidden bg-white/70 backdrop-blur border border-white rounded-[28px] shadow-sm p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+      <div>
+        <div class="text-lg font-black text-slate-900">חיפוש משמרות</div>
+        <div class="text-sm font-bold text-slate-500">נעילה/שחרור/הערה – גם במספר משמרות יחד</div>
+      </div>
+      <button id="searchShifts" class="px-4 py-2 rounded-2xl bg-slate-900 text-white font-extrabold">חפש</button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
+      <input id="dateFrom" type="date" class="p-3 rounded-2xl border border-slate-200 bg-white font-bold" />
+      <input id="dateTo" type="date" class="p-3 rounded-2xl border border-slate-200 bg-white font-bold" />
+      <select id="slot" class="p-3 rounded-2xl border border-slate-200 bg-white font-bold">
+        <option value="">כל הסוגים</option>
+        <option value="motsash_night">מוצ״ש לילה</option>
+        <option value="weekday_morning">א–ה בוקר</option>
+        <option value="weekday_evening">א–ה ערב</option>
+        <option value="weekday_night">א–ה לילה</option>
+        <option value="fri_morning">שישי בוקר</option>
+        <option value="sat_morning">שבת בוקר</option>
+        <option value="sat_night">שבת לילה</option>
+      </select>
+      <select id="locked" class="p-3 rounded-2xl border border-slate-200 bg-white font-bold">
+        <option value="">נעול/פתוח</option>
+        <option value="true">רק נעולים</option>
+        <option value="false">רק פתוחים</option>
+      </select>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-2 mb-3">
+      <button id="bulkLock" class="px-4 py-2 rounded-2xl bg-blue-600 text-white font-extrabold">נעל נבחרים</button>
+      <button id="bulkUnlock" class="px-4 py-2 rounded-2xl bg-amber-600 text-white font-extrabold">שחרר נבחרים</button>
+      <input id="bulkNote" class="flex-1 p-3 rounded-2xl border border-slate-200 bg-white font-bold" placeholder="הערה לכל הנבחרים…" />
+      <button id="applyNote" class="px-4 py-2 rounded-2xl bg-emerald-600 text-white font-extrabold">החל הערה</button>
+    </div>
+
+    <div id="shiftsMsg" class="text-sm font-bold text-slate-600 mb-2"></div>
+    <div id="shiftsBox" class="space-y-2"></div>
+  </section>
+
+  <!-- GENERATE -->
+  <section id="tab-generate" class="panel hidden bg-white/70 backdrop-blur border border-white rounded-[28px] shadow-sm p-4 relative overflow-hidden">
+    <div class="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none">
+      <div class="text-7xl font-black">YSB</div>
+    </div>
+    <div class="relative">
+      <div class="text-lg font-black text-slate-900">יצירת שבועות קדימה</div>
+      <div class="text-sm font-bold text-slate-500 mb-3">יוצר משמרות לפי התבנית (ניתן לשינוי בהמשך)</div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+        <label class="block">
+          <div class="text-xs font-bold text-slate-500 mb-1">כמה שבועות</div>
+          <input id="weeks" type="number" min="1" max="52" value="8" class="w-full p-3 rounded-2xl border border-slate-200 bg-white font-bold" />
+        </label>
+        <label class="block">
+          <div class="text-xs font-bold text-slate-500 mb-1">תאריך התחלה (אופציונלי)</div>
+          <input id="startDate" type="date" class="w-full p-3 rounded-2xl border border-slate-200 bg-white font-bold" />
+        </label>
+        <button id="generate" class="mt-[22px] py-3 rounded-2xl bg-gradient-to-l from-emerald-600 to-teal-600 text-white font-black">
+          צור משמרות
+        </button>
+        <button id="fillCalendar" class="mt-[22px] py-3 rounded-2xl bg-gradient-to-l from-indigo-600 to-blue-600 text-white font-black">
+          רענן פרשה+חגים
+        </button>
+      </div>
+
+      <div id="genMsg" class="mt-3 text-sm font-bold text-slate-600"></div>
+      <div class="mt-3">
+        <div class="flex items-center justify-between text-xs font-black text-slate-500 mb-1">
+          <span id="calProgressText">—</span>
+          <span id="calProgressPct">0%</span>
+        </div>
+        <div class="h-3 rounded-full bg-slate-200 overflow-hidden">
+          <div id="calProgress" class="h-3 rounded-full bg-gradient-to-l from-indigo-600 to-blue-600" style="width:0%"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<script type="module">
+  import { loadLogo, requireAchmashPage, logout, apiGet, apiPost, esc, setTopNow, toast } from "./app.js";
+
+  requireAchmashPage();
+  loadLogo(document.getElementById("logo"));
+  document.getElementById("logout").onclick = logout;
+
+  const topNow = document.getElementById("topNow");
+  setTopNow(topNow);
+  setInterval(()=>setTopNow(topNow), 30000);
+
+  // Tabs
+  function activate(tab){
+    document.querySelectorAll(".panel").forEach(p => p.classList.add("hidden"));
+    document.querySelectorAll(".tabbtn").forEach(b => b.className = "tabbtn flex-1 py-2.5 rounded-2xl bg-white text-slate-900 font-extrabold");
+    document.getElementById("tab-"+tab).classList.remove("hidden");
+    document.querySelector(`button[data-tab="${tab}"]`).className = "tabbtn flex-1 py-2.5 rounded-2xl bg-slate-900 text-white font-extrabold";
+  }
+  document.querySelectorAll("button[data-tab]").forEach(b => b.onclick = ()=>activate(b.dataset.tab));
+
+  /* ================== REQUESTS ================== */
+  const requestsBox = document.getElementById("requestsBox");
+  const requestsMsg = document.getElementById("requestsMsg");
+
+  function requestRow(r){
+    return `
+      <div class="border border-slate-200 bg-white rounded-2xl p-3">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="font-black text-slate-900">${esc(r.userName)} • ${esc(r.userPhone || "")}</div>
+            <div class="text-sm font-bold text-slate-500">
+              ${esc(r.shiftDate)} • ${esc(r.shiftLabel)} • מאויש ${r.assigned}/${r.capacity}
+              ${r.shiftLocked ? " • נעול" : ""} 
+            </div>
+            ${r.shiftNote ? `<div class="text-xs font-bold text-slate-500 mt-1">הערה: ${esc(r.shiftNote)}</div>` : ""}
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button data-approve="${esc(r.id)}"
+              class="px-3 py-2 rounded-2xl bg-emerald-600 text-white font-extrabold">אשר + שבץ</button>
+            <button data-reject="${esc(r.id)}"
+              class="px-3 py-2 rounded-2xl bg-rose-600 text-white font-extrabold">דחה</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadRequests(){
+    requestsMsg.textContent = "טוען בקשות…";
+    const r = await apiGet("adminRequests");
+    if(!r.ok){ requestsMsg.textContent = r.error || "שגיאה"; return; }
+    requestsBox.innerHTML = (r.requests||[]).map(requestRow).join("") || `<div class="text-sm font-bold text-slate-500">אין בקשות ממתינות</div>`;
+    requestsMsg.textContent = "";
+
+    document.querySelectorAll("button[data-approve]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        const id = btn.dataset.approve;
+        const rr = await apiPost("adminApproveRequest", { requestId: id });
+        if(rr.ok) toast("אושר ושובץ ✔", "ok"); else toast(rr.error||"שגיאה", "err");
+        await loadRequests();
+      };
+    });
+
+    document.querySelectorAll("button[data-reject]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        const id = btn.dataset.reject;
+        const rr = await apiPost("adminRejectRequest", { requestId: id });
+        if(rr.ok) toast("נדחה", "ok"); else toast(rr.error||"שגיאה", "err");
+        await loadRequests();
+      };
+    });
+  }
+
+  document.getElementById("reloadRequests").onclick = loadRequests;
+
+  /* ================== USERS ================== */
+  let allUsers = [];
+  const usersBox = document.getElementById("usersBox");
+  const userSearch = document.getElementById("userSearch");
+
+  function userRow(u){
+    const approved = !!u.approved;
+    return `
+      <div class="border border-slate-200 bg-white rounded-2xl p-3 flex flex-col lg:flex-row lg:items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="font-black text-slate-900">${esc(u.name||"")}</div>
+          <div class="text-xs font-bold text-slate-500">${esc(u.phone||"")} • ${esc(u.email||"")} • role: ${esc(u.role||"")}</div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button data-appr="${esc(u.id)}"
+            class="px-3 py-2 rounded-2xl font-extrabold ${approved?"bg-amber-100 text-amber-800":"bg-emerald-600 text-white"}">
+            ${approved ? "בטל אישור" : "אשר"}
+          </button>
+          <button data-edit="${esc(u.id)}" class="px-3 py-2 rounded-2xl bg-slate-200 font-extrabold">ערוך</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderUsers(){
+    const q = (userSearch.value||"").trim().toLowerCase();
+    const list = !q ? allUsers : allUsers.filter(u =>
+      String(u.name||"").toLowerCase().includes(q) ||
+      String(u.phone||"").toLowerCase().includes(q) ||
+      String(u.email||"").toLowerCase().includes(q)
+    );
+    usersBox.innerHTML = list.map(userRow).join("") || `<div class="text-sm font-bold text-slate-500">אין משתמשים</div>`;
+
+    document.querySelectorAll("button[data-appr]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        const id = btn.dataset.appr;
+        const u = allUsers.find(x=>x.id===id);
+        const rr = await apiPost("adminUpdateUser", { userId: id, approved: !u.approved });
+        if(rr.ok) toast("עודכן ✔", "ok"); else toast(rr.error||"שגיאה", "err");
+        await loadUsers();
+      };
+    });
+
+    document.querySelectorAll("button[data-edit]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        const id = btn.dataset.edit;
+        const u = allUsers.find(x=>x.id===id);
+        const name = prompt("שם", u.name||"") ?? u.name;
+        const phone = prompt("טלפון", u.phone||"") ?? u.phone;
+        const email = prompt("מייל", u.email||"") ?? u.email;
+        const role = prompt("role (achmash/user)", u.role||"") ?? u.role;
+        const rr = await apiPost("adminUpdateUser", { userId: id, name, phone, email, role });
+        if(rr.ok) toast("עודכן ✔", "ok"); else toast(rr.error||"שגיאה", "err");
+        await loadUsers();
+      };
+    });
+  }
+
+  async function loadUsers(){
+    const r = await apiGet("adminUsers");
+    if(!r.ok){ toast(r.error||"אין הרשאה", "err"); return; }
+    allUsers = r.users || [];
+    renderUsers();
+  }
+  userSearch.oninput = renderUsers;
+
+  /* ================== SHIFTS ================== */
+  let selected = new Set();
+  let lastShifts = [];
+  const shiftsBox = document.getElementById("shiftsBox");
+  const shiftsMsg = document.getElementById("shiftsMsg");
+
+  function shiftRow(s){
+    const checked = selected.has(s.id) ? "checked" : "";
+    return `
+      <label class="border border-slate-200 bg-white rounded-2xl p-3 flex items-center gap-3">
+        <input type="checkbox" data-sel="${esc(s.id)}" ${checked}/>
+        <div class="flex-1 min-w-0">
+          <div class="font-black text-slate-900">${esc(s.date)} • ${esc(s.slotLabel)}</div>
+          <div class="text-xs font-bold text-slate-500">
+            מאויש ${s.assigned}/${s.capacity} • ${s.locked ? "נעול" : "פתוח"} ${s.note ? " • הערה: "+esc(s.note) : ""}
+          </div>
+        </div>
+      </label>
+    `;
+  }
+
+  function renderShifts(){
+    shiftsBox.innerHTML = lastShifts.map(shiftRow).join("") || `<div class="text-sm font-bold text-slate-500">אין תוצאות</div>`;
+    document.querySelectorAll("input[data-sel]").forEach(cb=>{
+      cb.onchange = ()=>{
+        const id = cb.dataset.sel;
+        if(cb.checked) selected.add(id); else selected.delete(id);
+        shiftsMsg.textContent = `תוצאות: ${lastShifts.length} | נבחרו: ${selected.size}`;
+      };
+    });
+    shiftsMsg.textContent = `תוצאות: ${lastShifts.length} | נבחרו: ${selected.size}`;
+  }
+
+  document.getElementById("searchShifts").onclick = async ()=>{
+    const params = {
+      dateFrom: document.getElementById("dateFrom").value || "",
+      dateTo: document.getElementById("dateTo").value || "",
+      slot: document.getElementById("slot").value || "",
+      locked: document.getElementById("locked").value || ""
+    };
+    const r = await apiGet("adminShifts", params);
+    if(!r.ok){ toast(r.error||"שגיאה", "err"); return; }
+    lastShifts = r.shifts || [];
+    selected = new Set();
+    renderShifts();
+  };
+
+  async function bulkUpdate(payload){
+    const shiftIds = Array.from(selected);
+    if(!shiftIds.length) return toast("לא נבחרו משמרות", "err");
+    const r = await apiPost("adminBulkUpdateShifts", { shiftIds, ...payload });
+    if(!r.ok) return toast(r.error||"שגיאה", "err");
+    toast(`עודכנו ${r.updated} משמרות ✔`, "ok");
+    document.getElementById("searchShifts").click();
+  }
+
+  document.getElementById("bulkLock").onclick = ()=>bulkUpdate({ locked:true });
+  document.getElementById("bulkUnlock").onclick = ()=>bulkUpdate({ locked:false });
+  document.getElementById("applyNote").onclick = ()=>bulkUpdate({ note: document.getElementById("bulkNote").value || "" });
+
+  /* ================== GENERATE ================== */
+  document.getElementById("generate").onclick = async ()=>{
+    const weeks = Number(document.getElementById("weeks").value || 8);
+    const startDate = document.getElementById("startDate").value || "";
+    const r = await apiPost("adminGenerateWeeks", { weeks, startDate });
+    document.getElementById("genMsg").textContent = r.ok ? `נוצרו ${r.created} משמרות ✔` : (r.error||"שגיאה");
+    if(r.ok) toast("נוצר ✔", "ok");
+  };
+
+  document.getElementById("fillCalendar").onclick = async ()=>{
+    const btn = document.getElementById("fillCalendar");
+    const weeks = Number(document.getElementById("weeks").value || 8);
+    const startDate = document.getElementById("startDate").value || "";
+    const prog = document.getElementById("calProgress");
+    const progText = document.getElementById("calProgressText");
+    const progPct = document.getElementById("calProgressPct");
+
+    btn.disabled = true;
+    btn.classList.add("opacity-70");
+    prog.style.width = "0%";
+    progText.textContent = "מתחיל רענון…";
+    progPct.textContent = "0%";
+
+    // Helper: compute Sunday for a given base date (ISO)
+    function toDate(iso){ return new Date(iso ? (iso+"T00:00:00") : new Date()); }
+    let base = startDate ? toDate(startDate) : new Date();
+    base.setHours(0,0,0,0);
+
+    // Align to Sunday for "week blocks"
+    const sunday0 = new Date(base);
+    sunday0.setDate(base.getDate() - base.getDay());
+
+    for(let w=0; w<weeks; w++){
+      const sunday = new Date(sunday0);
+      sunday.setDate(sunday0.getDate() + w*7);
+      const saturday = new Date(sunday);
+      saturday.setDate(sunday.getDate() + 6);
+
+      const start = sunday.toISOString().slice(0,10);
+      const end = saturday.toISOString().slice(0,10);
+
+      progText.textContent = `מרענן שבוע ${w+1}/${weeks} (${start}–${end})…`;
+
+      const r = await apiPost("adminFillCalendarRange", { start, end });
+      if(!r.ok){
+        toast(r.error || "שגיאה ברענון", "err");
+        document.getElementById("genMsg").textContent = r.error || "שגיאה";
+        btn.disabled = false;
+        btn.classList.remove("opacity-70");
+        return;
+      }
+
+      const pct = Math.round(((w+1)/weeks)*100);
+      prog.style.width = pct + "%";
+      progPct.textContent = pct + "%";
+    }
+
+    document.getElementById("genMsg").textContent = `עודכנו נתוני פרשה/חגים עבור ${weeks} שבועות ✔`;
+    toast("עודכן ✔", "ok");
+    progText.textContent = "הושלם ✔";
+    btn.disabled = false;
+    btn.classList.remove("opacity-70");
+  };
+
+  // boot
+  activate("requests");
+  await loadRequests();
+  await loadUsers();
+</script>
+</body>
+</html>
