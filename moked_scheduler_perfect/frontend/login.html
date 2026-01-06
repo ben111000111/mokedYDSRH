@@ -3,66 +3,76 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>כניסה | מערכת מוקד</title>
-
+  <title>כניסה | מערכת מוקד מצוקה</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
-    *{font-family:Heebo,system-ui,-apple-system,Segoe UI,Arial,sans-serif;}
+    body { font-family: 'Heebo', sans-serif; }
+    .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.5); }
+    .anim-bg { background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab); background-size: 400% 400%; animation: gradient 15s ease infinite; }
+    @keyframes gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
   </style>
 </head>
 
-<body class="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-slate-100 to-slate-200 flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4 bg-slate-50 relative overflow-hidden">
+  
+  <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+    <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-400/20 blur-[100px]"></div>
+    <div class="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-indigo-400/20 blur-[100px]"></div>
+    <div class="absolute -bottom-[10%] left-[20%] w-[30%] h-[30%] rounded-full bg-teal-400/20 blur-[100px]"></div>
+  </div>
+
   <div id="toast" style="display:none;"></div>
 
-  <div class="w-full max-w-md bg-white/80 backdrop-blur rounded-[28px] shadow-xl border border-white p-6 relative overflow-hidden">
-    <!-- Brand watermark -->
-    <div class="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none">
-      <div class="text-8xl font-black tracking-tight" id="wm">YSB</div>
+  <div class="w-full max-w-md glass rounded-3xl shadow-2xl shadow-indigo-500/10 p-8 relative">
+    
+    <div class="text-center mb-8">
+      <div id="logo" class="h-16 mx-auto mb-4 flex items-center justify-center"></div>
+      <h1 id="appName" class="text-3xl font-black text-slate-800 tracking-tight"></h1>
+      <p id="tagline" class="text-sm font-medium text-slate-500 mt-2"></p>
     </div>
 
-    <div class="relative">
-      <div class="flex items-center gap-3 mb-6">
-        <div id="logo" class="h-10"></div>
-        <div>
-          <div class="text-xl font-black text-slate-900" id="appName">מערכת מוקד</div>
-          <div class="text-sm font-bold text-slate-500" id="tagline">ניהול סידור • בקשות • שיבוץ</div>
+    <div id="status" class="text-center text-sm font-bold text-slate-400 mb-6 animate-pulse">מתחבר לשרת...</div>
+
+    <div class="flex p-1 bg-slate-100/80 rounded-2xl mb-6 relative">
+      <button id="tab-login" class="flex-1 py-2 rounded-xl text-sm font-bold transition-all duration-300 shadow-sm bg-white text-indigo-900">כניסה</button>
+      <button id="tab-reg" class="flex-1 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-indigo-600 transition-all duration-300">הרשמה</button>
+    </div>
+
+    <div class="relative min-h-[200px]">
+      
+      <form id="loginForm" class="space-y-4 transition-all duration-300 absolute inset-0">
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-slate-500 mr-1">מזהה משתמש</label>
+          <input id="login" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-bold text-slate-800 placeholder-slate-400" placeholder="טלפון או אימייל" />
         </div>
-      </div>
-
-      <div id="status" class="text-sm font-bold text-slate-500 mb-4">בודק חיבור…</div>
-
-      <div class="grid grid-cols-2 gap-2 mb-4">
-        <button id="tab-login" class="py-2.5 rounded-2xl bg-slate-900 text-white font-extrabold">כניסה</button>
-        <button id="tab-reg" class="py-2.5 rounded-2xl bg-slate-200 text-slate-900 font-extrabold">רישום</button>
-      </div>
-
-      <form id="loginForm" class="space-y-3">
-        <input id="login" class="w-full p-3 rounded-2xl border border-slate-200 bg-white font-bold" placeholder="טלפון או מייל" />
-        <input id="pass" type="password" class="w-full p-3 rounded-2xl border border-slate-200 bg-white font-bold" placeholder="סיסמה" />
-        <button class="w-full py-3 rounded-2xl bg-gradient-to-l from-blue-600 to-indigo-600 text-white font-black">
-          התחברות
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-slate-500 mr-1">סיסמה</label>
+          <input id="pass" type="password" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-bold text-slate-800 placeholder-slate-400" placeholder="•••••••" />
+        </div>
+        <button class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/30 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+          התחבר למערכת
         </button>
       </form>
 
-      <form id="regForm" class="space-y-3 hidden">
-        <input id="name" class="w-full p-3 rounded-2xl border border-slate-200 bg-white font-bold" placeholder="שם מלא" />
-        <input id="phone" class="w-full p-3 rounded-2xl border border-slate-200 bg-white font-bold" placeholder="טלפון" />
-        <input id="email" class="w-full p-3 rounded-2xl border border-slate-200 bg-white font-bold" placeholder="מייל (רשות)" />
-        <input id="rpass" type="password" class="w-full p-3 rounded-2xl border border-slate-200 bg-white font-bold" placeholder="סיסמה (מינימום 4)" />
-        <button class="w-full py-3 rounded-2xl bg-gradient-to-l from-emerald-600 to-teal-600 text-white font-black">
-          שלח בקשה
+      <form id="regForm" class="space-y-3 transition-all duration-300 absolute inset-0 hidden opacity-0 translate-x-4">
+        <input id="name" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-800" placeholder="שם מלא" />
+        <input id="phone" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-800" placeholder="טלפון נייד" />
+        <input id="email" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-800" placeholder="אימייל (אופציונלי)" />
+        <input id="rpass" type="password" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-800" placeholder="סיסמה (4 תווים לפחות)" />
+        <button class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/30 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+          שלח בקשת הצטרפות
         </button>
       </form>
+    </div>
 
-      <div id="msg" class="mt-4 text-sm font-bold"></div>
-
-      <div class="mt-6 text-xs font-bold text-slate-500 leading-relaxed">
-        * רק משתמש שאושר ע״י אחמ״ש יכול להיכנס למערכת.
-      </div>
+    <div id="msg" class="mt-6 text-center text-sm font-bold min-h-[20px]"></div>
+    
+    <div class="mt-8 pt-6 border-t border-slate-200/60 text-center">
+      <p class="text-[10px] font-bold text-slate-400">הגישה למערכת מאובטחת ומחייבת אישור אחמ"ש</p>
+      <div id="wm" class="text-[10px] font-black text-slate-200 mt-2 tracking-widest uppercase"></div>
     </div>
   </div>
 
@@ -70,79 +80,98 @@
   import { CONFIG } from "./config.js";
   import { loadLogo, apiGet, apiPost, setSession, toast } from "./app.js";
 
+  // Brand Setup
   document.getElementById("wm").textContent = CONFIG.LOGO_TEXT;
   document.getElementById("appName").textContent = CONFIG.APP_NAME;
   document.getElementById("tagline").textContent = CONFIG.BRAND_TAGLINE;
-
   loadLogo(document.getElementById("logo"));
 
+  // Health Check
   const status = document.getElementById("status");
   try {
     const r = await apiGet("health");
     if (r.ok) {
-      status.textContent = "מחובר ✔";
-      status.className = "text-sm font-black text-emerald-700 mb-4";
-    } else {
-      status.textContent = "שגיאת חיבור";
-      status.className = "text-sm font-black text-rose-700 mb-4";
-    }
+      status.textContent = "מערכת מחוברת ומוכנה ✔";
+      status.className = "text-center text-xs font-bold text-emerald-600 bg-emerald-50 py-1 px-3 rounded-full mx-auto w-fit mb-6";
+    } else { throw new Error(); }
   } catch {
-    status.textContent = "לא ניתן להתחבר לשרת";
-    status.className = "text-sm font-black text-rose-700 mb-4";
+    status.textContent = "אין תקשורת עם השרת";
+    status.className = "text-center text-xs font-bold text-rose-600 bg-rose-50 py-1 px-3 rounded-full mx-auto w-fit mb-6";
   }
 
+  // Tabs Logic with Animation
   const loginForm = document.getElementById("loginForm");
   const regForm = document.getElementById("regForm");
+  const btnLogin = document.getElementById("tab-login");
+  const btnReg = document.getElementById("tab-reg");
 
-  document.getElementById("tab-login").onclick = () => {
-    loginForm.classList.remove("hidden");
-    regForm.classList.add("hidden");
+  function switchTab(isLogin) {
     document.getElementById("msg").textContent = "";
-  };
-  document.getElementById("tab-reg").onclick = () => {
-    regForm.classList.remove("hidden");
-    loginForm.classList.add("hidden");
-    document.getElementById("msg").textContent = "";
-  };
+    if (isLogin) {
+      btnLogin.className = "flex-1 py-2 rounded-xl text-sm font-bold transition-all duration-300 shadow-sm bg-white text-indigo-900";
+      btnReg.className = "flex-1 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-indigo-600 transition-all duration-300";
+      
+      regForm.classList.add("hidden", "opacity-0", "translate-x-4");
+      loginForm.classList.remove("hidden");
+      setTimeout(() => loginForm.classList.remove("opacity-0", "-translate-x-4"), 50);
+    } else {
+      btnReg.className = "flex-1 py-2 rounded-xl text-sm font-bold transition-all duration-300 shadow-sm bg-white text-emerald-900";
+      btnLogin.className = "flex-1 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-emerald-600 transition-all duration-300";
+      
+      loginForm.classList.add("hidden", "opacity-0", "-translate-x-4");
+      regForm.classList.remove("hidden");
+      setTimeout(() => regForm.classList.remove("opacity-0", "translate-x-4"), 50);
+    }
+  }
 
+  btnLogin.onclick = () => switchTab(true);
+  btnReg.onclick = () => switchTab(false);
+
+  // Submit Logic
   loginForm.onsubmit = async (e) => {
     e.preventDefault();
     const msg = document.getElementById("msg");
-    msg.className = "mt-4 text-sm font-black text-slate-500";
-    msg.textContent = "מתחבר…";
+    msg.className = "mt-6 text-center text-sm font-bold text-slate-400 animate-pulse";
+    msg.textContent = "מאמת פרטים...";
+    
     const r = await apiPost("login", {
       login: document.getElementById("login").value.trim(),
       password: document.getElementById("pass").value
     });
+    
     if (!r.ok) {
-      msg.className = "mt-4 text-sm font-black text-rose-700";
-      msg.textContent = r.error || "שגיאה בהתחברות";
+      msg.className = "mt-6 text-center text-sm font-bold text-rose-600";
+      msg.textContent = r.error || "פרטי הזדהות שגויים";
+      toast(r.error || "שגיאה", "err");
       return;
     }
     setSession(r.token, r.user);
-    toast("ברוך הבא 👋", "ok");
-    window.location.href = "schedule.html";
+    toast("התחברת בהצלחה", "ok");
+    setTimeout(() => window.location.href = "schedule.html", 500);
   };
 
   regForm.onsubmit = async (e) => {
     e.preventDefault();
     const msg = document.getElementById("msg");
-    msg.className = "mt-4 text-sm font-black text-slate-500";
-    msg.textContent = "שולח בקשה…";
+    msg.className = "mt-6 text-center text-sm font-bold text-slate-400 animate-pulse";
+    msg.textContent = "שולח בקשה...";
+    
     const r = await apiPost("register", {
       name: document.getElementById("name").value.trim(),
       phone: document.getElementById("phone").value.trim(),
       email: document.getElementById("email").value.trim(),
       password: document.getElementById("rpass").value
     });
+    
     if (!r.ok) {
-      msg.className = "mt-4 text-sm font-black text-rose-700";
+      msg.className = "mt-6 text-center text-sm font-bold text-rose-600";
       msg.textContent = r.error || "שגיאה ברישום";
       return;
     }
-    msg.className = "mt-4 text-sm font-black text-emerald-700";
-    msg.textContent = "נשלח. ממתין לאישור אחמ״ש.";
-    toast("נרשמת ✔ ממתין לאישור", "ok");
+    msg.className = "mt-6 text-center text-sm font-bold text-emerald-600";
+    msg.textContent = "הבקשה נשלחה לאישור אחמ״ש!";
+    toast("נרשמת בהצלחה", "ok");
+    e.target.reset();
   };
 </script>
 </body>
