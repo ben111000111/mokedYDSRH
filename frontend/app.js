@@ -1,98 +1,53 @@
-// frontend/app.js
-// =================
-// ליבת הפרונט – API, Session, Utilities
-
 import { CONFIG } from "./config.js";
 
-/* ================== SESSION ================== */
-
+/* ===== SESSION ===== */
 export function setSession(token, user) {
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));
 }
-
 export function getToken() {
   return localStorage.getItem("token");
 }
-
 export function getUser() {
-  try {
-    return JSON.parse(localStorage.getItem("user"));
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(localStorage.getItem("user")); }
+  catch { return null; }
 }
-
 export function logout() {
   localStorage.clear();
   window.location.href = "login.html";
 }
 
-/* ================== API ================== */
-
-async function apiRequest(method, action, data = {}) {
-  const payload =
-    method === "GET"
-      ? null
-      : JSON.stringify({
-          action,
-          token: getToken(),
-          ...data,
-        });
-
-  const url =
-    method === "GET"
-      ? `${CONFIG.API_URL}?action=${action}&token=${getToken() || ""}`
-      : CONFIG.API_URL;
-
-  const res = await fetch(url, {
-    method,
+/* ===== API ===== */
+export async function apiGet(action, params = {}) {
+  const q = new URLSearchParams({ action, token: getToken(), ...params });
+  const res = await fetch(`${CONFIG.API_URL}?${q.toString()}`);
+  return res.json();
+}
+export async function apiPost(action, data = {}) {
+  const res = await fetch(CONFIG.API_URL, {
+    method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: payload,
+    body: JSON.stringify({ action, token: getToken(), ...data }),
   });
-
   return res.json();
 }
 
-export const api = {
-  health: () => apiRequest("GET", "health"),
-};
-
-/* ================== LOGO ================== */
-
-export function loadLogo(container) {
-  container.innerHTML = "";
-
-  if (CONFIG.LOGO_URL) {
-    const img = document.createElement("img");
-    img.src = CONFIG.LOGO_URL;
-    img.alt = CONFIG.APP_NAME;
-    img.className = "h-10 object-contain";
-
-    img.onerror = () => {
-      container.textContent = CONFIG.LOGO_TEXT;
-      container.className =
-        "font-black text-xl tracking-wide text-slate-800";
-    };
-
-    container.appendChild(img);
-  } else {
-    container.textContent = CONFIG.LOGO_TEXT;
-    container.className =
-      "font-black text-xl tracking-wide text-slate-800";
+/* ===== LOGO ===== */
+export function loadLogo(el) {
+  el.innerHTML = "";
+  if (!CONFIG.LOGO_URL) {
+    el.textContent = CONFIG.LOGO_TEXT;
+    return;
   }
+  const img = document.createElement("img");
+  img.src = CONFIG.LOGO_URL;
+  img.className = "h-10 object-contain";
+  img.onerror = () => (el.textContent = CONFIG.LOGO_TEXT);
+  el.appendChild(img);
 }
 
-/* ================== HELPERS ================== */
-
-export function esc(str) {
-  return String(str || "").replace(/[&<>"']/g, (c) => {
-    return {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    }[c];
-  });
+export function esc(s) {
+  return String(s || "").replace(/[&<>"']/g, c =>
+    ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])
+  );
 }
