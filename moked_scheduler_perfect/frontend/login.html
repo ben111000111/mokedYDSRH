@@ -71,7 +71,7 @@
     <div id="msg" class="mt-6 text-center text-sm font-bold min-h-[20px]"></div>
     
     <div class="mt-8 pt-6 border-t border-slate-200/60 text-center">
-      <p class="text-[10px] font-bold text-slate-400">הגישה למערכת מאובטחת ומחייבת אישור אחמ"ש</p>
+      <p class="text-[10px] font-bold text-slate-400">הגישה למערכת מאובטחת</p>
       <div id="wm" class="text-[10px] font-black text-slate-200 mt-2 tracking-widest uppercase"></div>
     </div>
   </div>
@@ -91,7 +91,7 @@
   try {
     const r = await apiGet("health");
     if (r.ok) {
-      status.textContent = "מערכת מחוברת ומוכנה ✔";
+      status.textContent = "מחובר";
       status.className = "text-center text-xs font-bold text-emerald-600 bg-emerald-50 py-1 px-3 rounded-full mx-auto w-fit mb-6";
     } else { throw new Error(); }
   } catch {
