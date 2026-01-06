@@ -12,7 +12,8 @@ export function getUser() {
   try { return JSON.parse(localStorage.getItem("user") || "null"); }
   catch { return null; }
 }
-export function logout() {
+export async function logout() {
+  try { await apiPost("logout", {}); } catch {}
   localStorage.clear();
   window.location.href = "login.html";
 }
