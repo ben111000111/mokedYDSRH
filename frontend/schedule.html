@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>סידור שבועי | מערכת מוקד</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-slate-100">
+
+<!-- HEADER -->
+<header class="sticky top-0 bg-white border-b z-50">
+  <div class="max-w-6xl mx-auto p-3 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div id="logo" class="h-10"></div>
+      <div>
+        <div class="font-extrabold text-slate-800">מערכת מוקד</div>
+        <div id="now" class="text-xs font-bold text-slate-500"></div>
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <button id="logout"
+              class="px-3 py-2 rounded-2xl bg-red-50 text-red-700 font-extrabold">
+        יציאה
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- CONTENT -->
+<main class="max-w-6xl mx-auto p-4">
+
+  <!-- WEEK HEADER -->
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <div id="weekTitle" class="text-xl font-extrabold text-slate-800"></div>
+      <div id="weekRange" class="text-sm font-bold text-slate-500"></div>
+    </div>
+
+    <div class="flex gap-2">
+      <button id="prevWeek"
+              class="px-4 py-2 rounded-2xl bg-slate-200 font-extrabold">
+        ◀
+      </button>
+      <button id="nextWeek"
+              class="px-4 py-2 rounded-2xl bg-slate-200 font-extrabold">
+        ▶
+      </button>
+    </div>
+  </div>
+
+  <!-- GRID -->
+  <div id="weekGrid"
+       class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  </div>
+
+  <div id="msg" class="mt-4 font-bold"></div>
+
+</main>
+
+<script type="module">
+  import { CONFIG } from "./config.js";
+  import {
+    api,
+    loadLogo,
+    logout,
+    esc
+  } from "./app.js";
+
+  const logoBox = document.getElementById("logo");
+  loadLogo(logoBox);
+
+  document.getElementById("logout").onclick = logout;
+
+  let anchorDate = new Date();
+
+  function formatDate(d) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  function renderNow(header) {
+    const parts = [];
+    if (header.hebrewDate) parts.push(header.hebrewDate);
+    parts.push(header.date);
+    parts.push(header.time);
+
+    const extra = [];
+    if (header.parasha) extra.push(header.parasha);
+    if (header.holidayNames) extra.push(header.holidayNames);
+
+    document.getElementById("now").textContent =
+      parts.join(" | ") + (extra.length ? " • " + extra.join(" • ") : "");
+  }
+
+  function shiftCard(shift) {
+    const disabled = shift.locked || shift.missing === 0;
+
+    return `
+      <div class="p-3 rounded-2xl border bg-slate-50">
+        <div class="text-xs font-black text-slate-500">
+          ${esc(shift.label)}
+        </div>
+        <div class="font-extrabold text-slate-800">
+          מאויש ${shift.assigned}/${shift.capacity}
+        </div>
+        <div class="text-xs font-bold text-slate-500">
+          ${shift.locked ? "נעול" : shift.missing > 0 ? "יש מקום" : "מלא"}
+        </div>
+        ${shift.note ? `
+          <div class="text-xs font-bold text-slate-500 mt-1">
+            הערה: ${esc(shift.note)}
+          </div>` : ""}
+        <button
+          data-id="${shift.id}"
+          class="mt-2 w-full py-2 rounded-xl font-extrabold
+            ${disabled
+              ? "bg-slate-200 text-slate-400"
+              : "bg-blue-600 text-white"}"
+          ${disabled ? "disabled" : ""}>
+          הגש בקשה
+        </button>
+      </div>
+    `;
+  }
+
+  function dayColumn(day) {
+    return `
+      <div class="bg-white rounded-3xl shadow p-4 relative overflow-hidden">
+        <div class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+          <div class="text-6xl font-black">LOGO</div>
+        </div>
+
+        <div class="relative">
+          <div class="font-extrabold text-slate-800 mb-1">
+            ${day.title}
+          </div>
+          <div class="text-xs font-bold text-slate-500 mb-3">
+            ${day.hebrewDate} | ${day.date}
+            ${day.parasha ? " • " + day.parasha : ""}
+            ${day.holidays ? " • " + day.holidays : ""}
+          </div>
+
+          ${day.shifts.length
+            ? day.shifts.map(shiftCard).join("")
+            : `<div class="text-sm font-bold text-slate-400">
+                 אין משמרות
+               </div>`}
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadWeek() {
+    document.getElementById("msg").textContent = "טוען סידור…";
+
+    const res = await fetch(
+      `${CONFIG.API_URL}?action=getWeek&date=${formatDate(anchorDate)}`
+    ).then(r => r.json());
+
+    if (!res.ok) {
+      document.getElementById("msg").textContent = res.error;
+      return;
+    }
+
+    renderNow(res.header);
+
+    document.getElementById("weekTitle").textContent =
+      res.weekParasha ? "שבוע פרשת " + res.weekParasha : "סידור שבועי";
+
+    document.getElementById("weekRange").textContent =
+      res.start + " – " + res.end;
+
+    const grid = document.getElementById("weekGrid");
+    grid.innerHTML = res.days.map(dayColumn).join("");
+
+    document.querySelectorAll("button[data-id]").forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.dataset.id;
+        document.getElementById("msg").textContent = "שולח בקשה…";
+
+        const r = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "requestShift",
+            shiftId: id,
+            token: localStorage.getItem("token")
+          })
+        }).then(r => r.json());
+
+        document.getElementById("msg").textContent =
+          r.ok ? "הבקשה נשלחה לאחמ״ש ✔" : r.error;
+      };
+    });
+
+    document.getElementById("msg").textContent = "";
+  }
+
+  document.getElementById("prevWeek").onclick = () => {
+    anchorDate.setDate(anchorDate.getDate() - 7);
+    loadWeek();
+  };
+
+  document.getElementById("nextWeek").onclick = () => {
+    anchorDate.setDate(anchorDate.getDate() + 7);
+    loadWeek();
+  };
+
+  loadWeek();
+</script>
+
+</body>
+</html>
