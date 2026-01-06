@@ -6,7 +6,7 @@ export const CONFIG = {
   // כתובת ה-Web App של Google Apps Script
   // תיראה בערך כך:
   // https://script.google.com/macros/s/XXXXXXXXXXXX/exec
-  API_URL: "https://script.google.com/macros/s/AKfycbyUWxnG8lWXWup1tAaAuV_BfsU6-myCKJSLnTrD5v4tayKsXZna359LFR1f6G5WxPc7oQ/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbw7C585dzqmQ9TVUCJy4rHIj57NgI1UXo3uUU1CMkLR1U9md-27u6uGIU5ZmYiU7UozaA/exec",
 
   // נתיב ללוגו (יחסי ל־frontend/)
   // לדוגמה: "./assets/logo.png"
@@ -18,4 +18,5 @@ export const CONFIG = {
   // שם המערכת (יופיע בכותרות)
   APP_NAME: "מערכת מוקד מצוקה יד שרה",
 };
+
 
